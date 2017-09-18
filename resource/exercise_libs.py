@@ -1,3 +1,4 @@
+import itertools as it
 import pandas as pd
 import numpy as np
 import plotly as plt
@@ -6,6 +7,37 @@ import sqlalchemy as sql
 SQLITE_FILE = 'exercise01.sqlite'
 QUERY_FILE  = 'records_flatten.sql'
 CSV_FILE    = 'exercise_records.csv'
+
+
+class Colors(object):
+    """
+    Colors taken from the default colors for the Seaborn
+    package. I provide an iterator here for cycling through
+    the colors using:
+
+    colors = Colors()
+    new_color = colors.next_color()
+
+    """
+    BLUE       = 'rgba(76,  114, 176, 1.0)'
+    GREEN      = 'rgba(85,  168, 104, 1.0)'
+    RED        = 'rgba(196,  78,  82, 1.0)'
+    PURPLE     = 'rgba(129, 114, 178, 1.0)'
+    YELLOW     = 'rgba(204, 185, 116, 1.0)'
+    TURQUOISE  = 'rgba(100, 181, 205, 1.0)'
+    BLACK      = 'rgba(  0,   0,   0, 1.0)'
+    LIGHT_GRAY = 'rbga(240, 240, 240, 1.0)'
+
+    def __init__(self):
+        self._seaborn_colors = [self.RED, self.BLUE, self.GREEN, self.PURPLE, self.YELLOW, self.TURQUOISE]
+        self._seaborn_cycle = it.cycle(self._seaborn_colors)
+
+    @property
+    def seaborn_colors(self):
+        return self._seaborn_colors
+
+    def next_color(self):
+        return next(self._seaborn_cycle)
 
 
 class CSVWriter(object):
@@ -27,8 +59,7 @@ class CSVWriter(object):
         :return: None
         """
         with self.engine.connect() as conn:
-            dataframe = pd.read_sql_query(self.query, conn)
-        self.query_dataframe = dataframe
+            self.query_dataframe = pd.read_sql_query(self.query, conn)
 
     def write_csv(self):
         """
@@ -38,17 +69,44 @@ class CSVWriter(object):
         self.query_dataframe.to_csv(self.csv_filename, index=False)
 
 
-class DataProcessor(object):
+class CSVLoader(object):
     """
-    Loads data from the csv file, processes it and then makes that data available
+    Loads data from the csv file into a dataframe, processes it and then makes that data available
     via json.
     """
     def __init__(self, csv_file=CSV_FILE):
-        pass
+        self._dataframe = None
+        self.dataframe = csv_file
 
+    @property
+    def dataframe(self):
+        """
+        Return the dataframe .
+        :return:
+        """
+        return self._dataframe
+
+    @dataframe.setter
+    def dataframe(self, csv_file):
+        """
+        Automatically convert the csv file path string into a
+        dataframe since that's always what we'll need.
+        :param csv_file: a file path to our csv string.
+        :return:
+        """
+        self._dataframe = pd.read_csv(csv_file)
 
 
 def write_csv_file():
+    """
+    Get the data from the SQLite database into a dataframe and
+    then save as a CSV.
+
+    The default options are used for the CSVWriter object and fill_dataframe
+    methods but they could be assigned here or used with
+    different values elsewhere.
+    :return: Nada
+    """
     csv = CSVWriter()
     csv.fill_dataframe()
     csv.write_csv()
