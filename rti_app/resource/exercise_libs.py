@@ -1,21 +1,16 @@
-import itertools as it
-import pandas as pd
-import numpy as np
-import plotly as plt
-import sqlalchemy as sql
-
 """
 Author: Scott Dillon
 Email: scott.dillon@gmail.com
 
-This is a collection of classes and functions to perform requirements 
+This is a collection of classes and functions to perform requirements
 of the exercise as far as the data extraction, saving, csv file reading
 and loading goes. Dataframe processing code is also here.
 """
-
-SQLITE_FILE = 'exercise01.sqlite'
-QUERY_FILE  = 'records_flatten.sql'
-CSV_FILE    = 'exercise_records.csv'
+import os
+import itertools as it
+import pandas as pd
+import plotly as plt
+import sqlalchemy as sql
 
 
 class Colors(object):
@@ -38,7 +33,8 @@ class Colors(object):
     LIGHT_GRAY = 'rbga(240, 240, 240, 1.0)'
 
     def __init__(self):
-        self._seaborn_colors = [self.RED, self.BLUE, self.GREEN, self.PURPLE, self.YELLOW, self.TURQUOISE]
+        self._seaborn_colors = [self.RED, self.BLUE, self.GREEN,
+                                self.PURPLE, self.YELLOW, self.TURQUOISE]
         self._seaborn_cycle = it.cycle(self._seaborn_colors)
 
     @property
@@ -64,7 +60,7 @@ class CSVWriter(object):
     a pandas dataframe and then saves that file as a flat
     CSV file.
     """
-    def __init__(self, db_file=SQLITE_FILE, query_file=QUERY_FILE, csv_file=CSV_FILE):
+    def __init__(self, db_file, query_file, csv_file):
         self.engine = get_database_engine(db_file)
         self.query = get_file_contents(query_file)
         self.csv_filename = csv_file
@@ -92,7 +88,7 @@ class CSVLoader(object):
     Loads data from the csv file into a dataframe, processes it and then makes that data available
     via json.
     """
-    def __init__(self, csv_file=CSV_FILE):
+    def __init__(self, csv_file):
         self._dataframe = None
         self.dataframe = csv_file
 
@@ -120,13 +116,13 @@ class DataProcessor(object):
     Performs processing of the census sample dataframe and provides
     methods for returning table data.
     """
-    def __init__(self, census_data):
+    def __init__(self, census_data_df):
         """
         Let's go ahead and assign the census data as an attribute and
         fix the column names implicitly.
-        :param census_data:
+        :param census_data: a dataframe containing the census data.
         """
-        self.census_data = census_data
+        self.census_data = census_data_df
         self.fix_names()
 
     def fix_names(self):
@@ -144,9 +140,9 @@ class DataProcessor(object):
         with a 1 or 0 indicating True or False
         :return:
         """
-        all_marital_status = self.census_data.loc['Marital Status'].unique()
+        all_marital_status = self.census_data.loc[:, 'Marital Status'].unique()
         married = filter(is_record_married, all_marital_status)
-        self.census_data.assign(Married=self.census_data['Marital Status'].isin(married))
+        self.census_data = self.census_data.assign(Married=self.census_data['Marital Status'].isin(married))
 
     def describe_census_data(self, decimals=3):
         """
@@ -158,13 +154,13 @@ class DataProcessor(object):
         """
         return round_decimals(self.census_data.describe(), decimals)
 
-    def groupby_50k_race(self):
+    def groupby_50k_married_race(self):
         """
         Perform a groupby on the dataframe with the
         columns "Over 50K" and "Race"
         :return:
         """
-        groupby_cols = ['Over 50K', 'Race']
+        groupby_cols = ['Over 50K', 'Married', 'Race']
         return self.groupby(groupby_cols)
 
     def groupby(self, groupby_cols):
@@ -176,9 +172,15 @@ class DataProcessor(object):
         """
         return self.census_data.groupby(groupby_cols)
 
+    def aggregate_groupby(self, groupby_obj):
+        aggregate_funcs = {'Married': ['count'],
+                           'Age': ['mean'],
+                           'Hours Per Week': ['mean'],
+                           'Education Num': ['mean']}
+        return round_decimals(groupby_obj.agg(aggregate_funcs), decimals=2)
 
 
-def write_csv_file():
+def write_csv_file(sqlite_file, query_file, csv_file):
     """
     Get the data from the SQLite database into a dataframe and
     then save as a CSV.
@@ -188,7 +190,7 @@ def write_csv_file():
     different values elsewhere.
     :return: Nada
     """
-    csv = CSVWriter()
+    csv = CSVWriter(db_file=sqlite_file, query_file=query_file, csv_file=csv_file)
     csv.fill_dataframe()
     csv.write_csv()
 
@@ -230,32 +232,57 @@ def round_decimals(dataframe, decimals=3):
     return dataframe.round(decimals)
 
 
-def return_dataframe_html(dataframe):
+def change_table_css_class(dataframe):
+    css_change_dict = {'class="dataframe"': 'class="table table-sm table-striped table-hover table-bordered"',
+                       'border="1"': ''}
+    table_html = return_dataframe_html(dataframe, print_index=True)
+    for old, new in css_change_dict.items():
+        table_html = replace_css_class(table_html, old, new)
+    return table_html
+
+
+def return_dataframe_html(dataframe, print_index=False):
     """
     Returns the html markup from a dataframe with a
     couple of non-default options. Don't print the index
     labels and make the column names bold.
 
+    index=False prevents the dataframe index from
+    being included in the CSV.
     :param dataframe: a pandas dataframe
     :return: a str of html markup
     """
-    return dataframe.to_html(bold_rows=True, index=False)
+    df_html = dataframe.to_html(index=print_index)
+    return df_html
 
 
-def load_csv_file():
+def replace_css_class(html_string, old_class, new_class):
+    return html_string.replace(old_class, new_class)
+
+
+def load_csv_file(csv_path):
     """
     Load the CSV file with the default filepath.
     :return:
     """
-    csv = CSVLoader()
-    return csv
+    csv = CSVLoader(csv_path)
+    return csv.dataframe
 
 
 def is_record_married(status):
-    if "Married" == status[:7]:
-        return True
-    return False
+    """
+
+    :param status:
+    :return:
+    """
+    return status.startswith('Married')
+
+
+def get_full_path(file_name):
+    module_path = os.path.abspath(__file__)
+    module_dir = os.path.dirname(module_path)
+    return os.path.join(module_dir, file_name)
 
 
 if __name__ == '__main__':
-    write_csv_file()
+    pass
