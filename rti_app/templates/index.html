@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="container-fluid">
+    <div class="container">
+        <h1 class="">EDA and Plots</h1>
+        <article >
+            <p>This is text for the first table.</p>
+        </article>
+        <div class="container" id="summary">
+            {{ summary_stats|safe }}
+        </div>
+    </div>
+    <div class="container">
+        <article >
+            <p>This is text for the second table.</p>
+        </article>
+        <div class="container" id="inc_race_marr">
+            {{ over_50k_race_marr|safe }}
+        </div>
+    </div>
+    <!--<div class="container-fluid" id="summary">-->
+        <!--{{ summary_stats|safe }}-->
+    <!--</div>-->
+    <!--<div class="container-fluid" id="summary">-->
+        <!--{{ summary_stats|safe }}-->
+    <!--</div>-->
+    <!--<div class="container-fluid" id="summary">-->
+        <!--{{ summary_stats|safe }}-->
+    <!--</div>-->
+    <!--<div class="container-fluid" id="summary">-->
+        <!--{{ summary_stats|safe }}-->
+    <!--</div>-->
+    <!--</div>-->
+</div>
+{% endblock %}
