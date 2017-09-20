@@ -1,21 +1,38 @@
 {% extends "layout.html" %}
 {% block body %}
-<div class="container-fluid">
-    <div class="container">
-        <h1 class="">EDA and Plots</h1>
-        <article >
-            <p>This is text for the first table.</p>
-        </article>
-        <div class="container" id="summary">
-            {{ summary_stats|safe }}
+<div class="container">
+    <div class="row ">
+        <div class="container mt-5">
+            <h1 class="">EDA and Plots</h1>
+            <article class="mt-5">
+                <p class="lead">Table 1: Summary Statistics</p>
+                <p>Count, mean, std. dev., minimum and quartile summary data for the entire
+                    dataset.</p>
+            </article>
+            <div class="container" id="summary">
+                {{ summary_stats|safe }}
+            </div>
         </div>
     </div>
-    <div class="container">
-        <article >
-            <p>This is text for the second table.</p>
-        </article>
-        <div class="container" id="inc_race_marr">
-            {{ over_50k_race_marr|safe }}
+    <div class="row">
+        <div class="container mt-5">
+            <article >
+                <p class="lead">Table 2: Sample Data Grouped by Over 50K, Married and Race</p>
+                <p>Notes:
+                    <ul>
+                        <li><code>Over 50K</code> signifies whether the census respondent makes more than
+                            $50k per year.</li>
+                        <li><code>Married</code> consolidates multiple <code>Marital Status</code> categories
+                            into a single binary variable.</li>
+                        <li><code>Race</code> denotes the respondents race.</li>
+                        <li><code>Hours Per Week</code> is the hours per week the respondent works.</li>
+                        <li><code>Education Num</code>: how many years of education the repondent completed.</li>
+                    </ul>
+                </p>
+            </article>
+            <div class="container" id="inc_race_marr">
+                {{ over_50k_race_marr|safe }}
+            </div>
         </div>
     </div>
     <!--<div class="container-fluid" id="summary">-->
