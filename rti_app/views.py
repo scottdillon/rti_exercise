@@ -1,8 +1,8 @@
 import os
 from rti_app import my_app
 from flask import render_template, request
-from .core import data_processor
-from .resource import exercise_libs as el
+from .core import get_index_text
+# from .resource import exercise_libs as el
 
 
 @my_app.route('/')
@@ -12,11 +12,7 @@ def index():
     stuff
     :return:
     """
-    summary = data_processor.describe_census_data()
-    summary_html = el.change_table_css_class(summary)
-    gb_over_50k_race = data_processor.groupby_50k_married_race()
-    df_over_50k = data_processor.aggregate_groupby(gb_over_50k_race)
-    html_over_50k = el.change_table_css_class(df_over_50k)
+    summary_html, html_over_50k = get_index_text()
     return render_template('index.html',
                            summary_stats=summary_html,
                            over_50k_race_marr=html_over_50k)
