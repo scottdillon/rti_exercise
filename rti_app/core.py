@@ -10,6 +10,7 @@ SQLITE_FILE = 'exercise01.sqlite'
 QUERY_FILE  = 'records_flatten.sql'
 CSV_FILE    = 'exercise_records.csv'
 
+
 sqlite_file = el.get_full_path(SQLITE_FILE)
 query_file = el.get_full_path(QUERY_FILE)
 csv_file = el.get_full_path(CSV_FILE)
@@ -72,46 +73,14 @@ def hours_worked_plot():
     removed.
     :return:
     """
-    hours_dataframe = data_processor.census_data[['Age','Hours Per Week']]
-    box_objs_list = return_box_plots_of_hours_worked(hours_dataframe)
-    x = hours_dataframe.loc[:, 'Age'].values
-    y = hours_dataframe.loc[:, 'Hours Per Week'].values
-    hours = plt.graph_objs.Histogram2dcontour(
-        x=x, y=y, name='density', ncontours=10,
-        colorscale='Hot', reversescale=True, showscale=False,
-        zmax=60,
-        nbinsx=80,
-        nbinsy=80,
-        zauto=False,
-        opacity=0.3
-
-        # autobinx=False, xbins = dict(start=16, end=100, size=3),
-        # autobiny=False, ybins = dict(start=0, end=100, size=3)
-    )
-    #el.HoursWorkedTrace(x=x, y=y)
-    mean_groupby = data_processor.groupby(['Age'])
-    agg_dict = {'Hours Per Week': 'mean'}
-    mean_hours_worked = data_processor.aggregate_groupby(mean_groupby, agg_dict)
-    mean_x = mean_hours_worked.index.values
-    mean_y = mean_hours_worked['Hours Per Week'].values
-    mean_hours_worked_trace = el.AvgHoursWorkedTrace(mean_x, mean_y)
-    trace_list = box_objs_list.append(mean_hours_worked_trace)
-    fig = el.HoursWorkedFigure(data=[hours, mean_hours_worked_trace])   #.append(mean_hours_worked_trace))
+    quantile_hours_worked = data_processor.get_quantile_traces()
+    mean_hours_worked = data_processor.get_mean_trace()
+    quantile_hours_worked.append(mean_hours_worked)
+    fig = el.HoursWorkedFigure(data=quantile_hours_worked)
     div = el.get_plotly_div_str(figure_obj=fig)
     return div
 
-def return_box_plots_of_hours_worked(hours_df) -> list:
-    boxplot_traces = []
-    for age in hours_df['Age'].unique():
 
-        box = plt.graph_objs.Box()
-        box.x = age
-        box.name = age
-        box.boxpoints = False
-        box.y = hours_df.loc[hours_df['Age'] == age].loc[:,'Hours Per Week']
-        boxplot_traces.append(box)
-    print('len of boxplot traces is {}'.format(len(boxplot_traces)))
-    return boxplot_traces
 
 
 
