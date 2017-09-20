@@ -1,3 +1,4 @@
+import plotly as plt
 from .resource import exercise_libs as el
 
 """
@@ -42,15 +43,41 @@ def load_csv_data():
 
 
 def get_index_text():
+    """
+
+    :return:
+    """
+    aggregate_funcs = {'Married': ['count'],
+                       'Age': ['mean'],
+                       'Hours Per Week': ['mean'],
+                       'Education Num': ['mean']}
+
     summary = data_processor.describe_census_data()
     summary_html = el.change_table_css_class(summary)
     gb_over_50k_race = data_processor.groupby_50k_married_race()
-    df_over_50k = data_processor.aggregate_groupby(gb_over_50k_race)
+    df_over_50k = data_processor.aggregate_groupby(gb_over_50k_race, aggregate_funcs)
     html_over_50k = el.change_table_css_class(df_over_50k)
     return summary_html, html_over_50k
 
 
+def hours_worked_plot():
+    """
 
+    :return:
+    """
+    dataframe = data_processor.census_data
+    x = dataframe.loc[:, 'Age'].values
+    y = dataframe.loc[:, 'Hours Per Week'].values
+    mean_groupby = data_processor.groupby(['Age'])
+    agg_dict = {'Hours Per Week': 'mean'}
+    mean_hours_worked = data_processor.aggregate_groupby(mean_groupby, agg_dict)
+    mean_x = mean_hours_worked.index.values
+    mean_y = mean_hours_worked['Hours Per Week'].values
+    hours_worked_trace = el.HoursWorkedTrace(x, y)
+    mean_hours_worked_trace = el.AvgHoursWorkedTrace(mean_x, mean_y)
+    fig = el.HoursWorkedFigure([hours_worked_trace, mean_hours_worked_trace])
+    div = el.get_plotly_div_str(fig)
+    return div
 
 
 
