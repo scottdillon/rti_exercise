@@ -1,7 +1,7 @@
 import os
 from rti_app import my_app
 from flask import render_template, request
-from .core import get_index_text
+from .core import get_index_text, hours_worked_plot
 # from .resource import exercise_libs as el
 
 
@@ -13,9 +13,11 @@ def index():
     :return:
     """
     summary_html, html_over_50k = get_index_text()
+    hours_worked_div = hours_worked_plot()
     return render_template('index.html',
                            summary_stats=summary_html,
-                           over_50k_race_marr=html_over_50k)
+                           over_50k_race_marr=html_over_50k,
+                           hours_worked=hours_worked_div)
 
 
 @my_app.route('/show_data')
