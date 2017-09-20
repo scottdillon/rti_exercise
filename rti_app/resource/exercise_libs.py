@@ -8,12 +8,15 @@ and loading goes. Dataframe processing code is also here.
 """
 import os
 import itertools as it
-from numpy import ndarray
+import numpy as np
 import pandas as pd
 import plotly as plt
 from plotly import graph_objs as go
 # from plotly import figure_factory
 import sqlalchemy as sql
+
+age = 'Age'
+hours_per_week = 'Hours Per Week'
 
 
 class Colors(object):
@@ -194,6 +197,36 @@ class DataProcessor(object):
         """
         return round_decimals(groupby_obj.agg(agg_dict), decimals=2)
 
+    def get_quantile_traces(self):
+        quantiles = [0.1, 0.25, 0.50, 0.75, 0.9]
+        quantiles_gb = self.perform_quantile_calculations(quantiles)
+        quantile_traces = self.make_quantile_traces(quantiles, quantiles_gb)
+        return quantile_traces
+
+    def perform_quantile_calculations(self, quantiles):
+        groupby = self.groupby([age])
+        quantiles_gb = groupby[hours_per_week].quantile(quantiles)
+        quantiles_gb = quantiles_gb.reorder_levels([1, 0])
+        return quantiles_gb
+
+    def make_quantile_traces(self, quantile_list, quantiles_gb):
+        q_traces = []
+        for q in quantile_list:
+            x = quantiles_gb.loc[q].index.values
+            y = quantiles_gb.loc[q].values
+            trace = HoursWorkedQuantileTrace(x=x, y=y, quantile=q)
+            q_traces.append(trace)
+        return q_traces
+
+    def get_mean_trace(self):
+        agg_dict = {hours_per_week: np.mean}
+        groupby = self.groupby([age])
+        mean_hours_worked = self.aggregate_groupby(groupby, agg_dict)
+        mean_x = mean_hours_worked.index.values
+        mean_y = mean_hours_worked[hours_per_week].values
+        mean_hours_worked_trace = AvgHoursWorkedTrace(mean_x, mean_y)
+        return mean_hours_worked_trace
+
 class GenericScatterTrace(go.Scatter):
     """
     This is a generic scatter trace inheriting from go.Scatter. Any common attributes 
@@ -213,23 +246,32 @@ class GenericScatterTrace(go.Scatter):
         self.y = y
 
 
-class HoursWorkedTrace(GenericScatterTrace):
+class HoursWorkedQuantileTrace(GenericScatterTrace):
     """
     Handles and sets standard attributes for the hours worked trace of all the hours
     worked records. This would be more useful if it were'nt a one off and we 
     were doing lots of scatter traces. Then we could set standard attributes of the
     trace for lots of plots.
     """
-    def __init__(self, x=None, y=None):
+    opacity_dict = {'0.1' : 0.3,
+                  '0.25': 0.7,
+                  '0.5': 1.0,
+                  '0.75': 0.7,
+                  '0.9': 0.3}
+    def __init__(self, x=None, y=None, quantile=None):
         super().__init__(x=x, y=y)
-        self.mode = 'markers'
+        self.mode = 'lines+markers'
         self.marker.color = Colors.BLUE
-        self.marker.opacity = 0.02
+        self.marker.opacity = self.opacity_dict[str(quantile)]
+        self.opacity = self.opacity_dict[str(quantile)]
         self.marker.size = 5
-        self.name = 'Hours Worked'
+        self.name = '{} Quantile'.format(quantile)
 
 
 class AvgHoursWorkedTrace(GenericScatterTrace):
+    """
+    Contains attributes specific to the mean hours worked trace on the hours worked plot.
+    """
     def __init__(self, x=None, y=None):
         super().__init__(x=x, y=y)
         self.mode = 'lines+markers'
@@ -239,11 +281,16 @@ class AvgHoursWorkedTrace(GenericScatterTrace):
 
 
 class HoursWorkedLayout(go.Layout):
+    """
+    The plotly template object of the hours worked plot.
+    
+    Inherits from plotly.graph_objs.Layout object.
+    """
     def __init__(self):
         super().__init__()
         self.title = "<b>Hours Per Week Worked by Age</b><br><i>with average hours worked by age</i>"
-        self.yaxis.title = 'Hours Worked per Week'
-        self.xaxis.title = 'Age'
+        self.yaxis.title = hours_per_week
+        self.xaxis.title = age
         self.height = 600
 
 
@@ -253,7 +300,7 @@ class HoursWorkedFigure(go.Figure):
     """
     def __init__(self, data=None):
         super().__init__()
-        self.data = data
+        self.data = go.Data(data)
         self.layout = HoursWorkedLayout()
 
 class HoursOverUnder50kFigure(go.Figure):
@@ -317,6 +364,11 @@ def round_decimals(dataframe, decimals=3):
 
 
 def change_table_css_class(dataframe):
+    """
+    Changes out segments of html based on what is in the dict.
+    :param dataframe: a dataframe to turn into html
+    :return: returns table html based on the input dataframe.
+    """
     css_change_dict = {'class="dataframe"': 'class="table table-sm table-striped table-hover table-bordered"',
                        'border="1"': ''}
     table_html = return_dataframe_html(dataframe, print_index=True)
@@ -341,13 +393,20 @@ def return_dataframe_html(dataframe, print_index=False):
 
 
 def replace_css_class(html_string, old_class, new_class):
+    """
+    Replaces the css class in teh html element string.
+    :param html_string: a string of html
+    :param old_class: the text segment to replace. It should be a css class designator
+    :param new_class: the text to add in place of the old css class 
+    :return: a string of html
+    """
     return html_string.replace(old_class, new_class)
 
 
 def load_csv_file(csv_path):
     """
     Load the CSV file with the default filepath.
-    :return:
+    :return: return a dataframe with data loaded into it.
     """
     csv = CSVLoader(csv_path)
     return csv.dataframe
@@ -355,20 +414,32 @@ def load_csv_file(csv_path):
 
 def is_record_married(status):
     """
-
-    :param status:
-    :return:
+    does the status begin with the word Married
+    :param status: a string representing the marital status
+    :return: a boolean
     """
     return status.startswith('Married')
 
 
 def get_full_path(file_name):
+    """
+    Get the full path for a file based on this file's directory. 
+    Simply joins a filename with the directory of the file this function is in.
+    :param file_name: a string object file name.
+    :return: return a full absolute path string.
+    """
     module_path = os.path.abspath(__file__)
     module_dir = os.path.dirname(module_path)
     return os.path.join(module_dir, file_name)
 
 
 def get_plotly_div_str(figure_obj, image_height=800):
+    """
+    Gets the html for the div created by the plotly plot.
+    :param figure_obj: a plotly graph_objs Figure object with data and layout objects
+    :param image_height: an integer for the image height
+    :return: returns a string of html wrapped in a div element.
+    """
     return plt.offline.plot(figure_obj,
                             include_plotlyjs=False,
                             output_type='div',
