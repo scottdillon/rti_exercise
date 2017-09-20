@@ -40,4 +40,18 @@ def load_csv_data():
 # already written. Let's make this depend on an argument?
 # write_csv_file()
 
+
+def get_index_text():
+    summary = data_processor.describe_census_data()
+    summary_html = el.change_table_css_class(summary)
+    gb_over_50k_race = data_processor.groupby_50k_married_race()
+    df_over_50k = data_processor.aggregate_groupby(gb_over_50k_race)
+    html_over_50k = el.change_table_css_class(df_over_50k)
+    return summary_html, html_over_50k
+
+
+
+
+
+
 data_processor = load_csv_data()
