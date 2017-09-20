@@ -8,8 +8,11 @@ and loading goes. Dataframe processing code is also here.
 """
 import os
 import itertools as it
+from numpy import ndarray
 import pandas as pd
 import plotly as plt
+from plotly import graph_objs as go
+from plotly import figure_factory
 import sqlalchemy as sql
 
 
@@ -172,12 +175,69 @@ class DataProcessor(object):
         """
         return self.census_data.groupby(groupby_cols)
 
-    def aggregate_groupby(self, groupby_obj):
-        aggregate_funcs = {'Married': ['count'],
-                           'Age': ['mean'],
-                           'Hours Per Week': ['mean'],
-                           'Education Num': ['mean']}
-        return round_decimals(groupby_obj.agg(aggregate_funcs), decimals=2)
+    @staticmethod
+    def aggregate_groupby(groupby_obj, agg_dict):
+        """
+        Perform the aggregate calculations on teh groupby
+        object.
+        :param groupby_obj:
+        :param agg_dict: a dict with columns as keys and a list of
+         string aggregation functions, i.e. 'mean', 'count'
+         A valid dict would be:
+         {
+            'Married': ['count'],
+            'Age': ['mean'],
+            'Hours Per Week': ['mean'],
+            'Education Num': ['mean']
+         } assuming those columns are not grouping columns.
+        :return:
+        """
+        return round_decimals(groupby_obj.agg(agg_dict), decimals=2)
+
+
+class HoursWorkedTrace(go.Scatter):
+    def __init__(self, x=None, y=None):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.mode = 'markers'
+        self.marker.color = Colors.BLUE
+        self.marker.opacity = 0.02
+        self.marker.size = 5
+        self.name = 'Hours Worked'
+
+
+class AvgHoursWorkedTrace(go.Scatter):
+    def __init__(self, x=None, y=None):
+        super().__init__()
+        self.x = x
+        self.y = y
+        self.mode = 'lines+markers'
+        self.marker.color = Colors.RED
+        self.marker.size = 8
+        self.name = 'Mean hours worked<br>at each age'
+
+
+class HoursWorkedLayout(go.Layout):
+    def __init__(self):
+        super().__init__()
+        self.title = "<b>Hours Per Week Worked by Age</b><br><i>with average hours worked by age</i>"
+        self.yaxis.title = 'Hours Worked per Week'
+        self.xaxis.title = 'Age'
+        self.height = 600
+
+
+class HoursWorkedFigure(go.Figure):
+    def __init__(self, data=None):
+        super().__init__()
+        self.data = data
+        self.layout = HoursWorkedLayout()
+
+class HoursOverUnder50kFigure(go.Figure):
+    def __init__(self, data=None):
+
+
+
 
 
 def write_csv_file(sqlite_file, query_file, csv_file):
@@ -282,6 +342,15 @@ def get_full_path(file_name):
     module_path = os.path.abspath(__file__)
     module_dir = os.path.dirname(module_path)
     return os.path.join(module_dir, file_name)
+
+
+def get_plotly_div_str(figure_obj, image_height=800):
+    return plt.offline.plot(figure_obj,
+                            include_plotlyjs=False,
+                            output_type='div',
+                            show_link=False,
+                            image_height=image_height)
+
 
 
 if __name__ == '__main__':
