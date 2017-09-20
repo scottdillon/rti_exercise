@@ -12,7 +12,7 @@ from numpy import ndarray
 import pandas as pd
 import plotly as plt
 from plotly import graph_objs as go
-from plotly import figure_factory
+# from plotly import figure_factory
 import sqlalchemy as sql
 
 
@@ -194,12 +194,34 @@ class DataProcessor(object):
         """
         return round_decimals(groupby_obj.agg(agg_dict), decimals=2)
 
-
-class HoursWorkedTrace(go.Scatter):
+class GenericScatterTrace(go.Scatter):
+    """
+    This is a generic scatter trace inheriting from go.Scatter. Any common attributes 
+    could be assigned here if they'll be set for all scatter traces.
+    
+    Unfortunately, we can't use property decorator since plotly won't let us add
+    new attributes to graph_obj (go.*) objects. It checks this in the 
+    PlotlyDict.__setitem__ method. It would be nice to set up a function 
+    to check if x is a dataframe and just take the index or the values for x and y respec.
+    
+    I _could_ override the __setitem__ method but that _could_ also break the crap out
+    of the Scatter obj/plotly so let's don't and say we didn't.
+    """
     def __init__(self, x=None, y=None):
-        super().__init__()
+        super().__init__(x=x, y=y)
         self.x = x
         self.y = y
+
+
+class HoursWorkedTrace(GenericScatterTrace):
+    """
+    Handles and sets standard attributes for the hours worked trace of all the hours
+    worked records. This would be more useful if it were'nt a one off and we 
+    were doing lots of scatter traces. Then we could set standard attributes of the
+    trace for lots of plots.
+    """
+    def __init__(self, x=None, y=None):
+        super().__init__(x=x, y=y)
         self.mode = 'markers'
         self.marker.color = Colors.BLUE
         self.marker.opacity = 0.02
@@ -207,11 +229,9 @@ class HoursWorkedTrace(go.Scatter):
         self.name = 'Hours Worked'
 
 
-class AvgHoursWorkedTrace(go.Scatter):
+class AvgHoursWorkedTrace(GenericScatterTrace):
     def __init__(self, x=None, y=None):
-        super().__init__()
-        self.x = x
-        self.y = y
+        super().__init__(x=x, y=y)
         self.mode = 'lines+markers'
         self.marker.color = Colors.RED
         self.marker.size = 8
@@ -228,6 +248,9 @@ class HoursWorkedLayout(go.Layout):
 
 
 class HoursWorkedFigure(go.Figure):
+    """
+    
+    """
     def __init__(self, data=None):
         super().__init__()
         self.data = data
@@ -235,6 +258,7 @@ class HoursWorkedFigure(go.Figure):
 
 class HoursOverUnder50kFigure(go.Figure):
     def __init__(self, data=None):
+        super().__init__()
 
 
 
