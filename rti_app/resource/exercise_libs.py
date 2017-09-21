@@ -262,7 +262,6 @@ class DataProcessor(object):
         over_50k_origins = self.over_50k_df[over_50k_tt]
         over_50k_origins_gb = over_50k_origins.groupby(['Country'])
         over_50k_origins_count = over_50k_origins_gb['Country'].count()
-        print(over_50k_origins_count)
         return over_50k_origins_count
 
 
@@ -357,6 +356,8 @@ class HistogramHoursWorked(go.Histogram):
         self.x = x
         self.opacity = opacity
         self.histnorm = norm
+        self.autobinx = False
+        self.xbins = {'start': 0, 'end':100, 'size': 3}
         self.name = name
         self.marker.line.width = line_width
         self.marker.color = self.colors.next_color()
