@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import plotly as plt
 from plotly import graph_objs as go
-# from plotly import figure_factory
 import sqlalchemy as sql
 
 age = 'Age'
@@ -130,6 +129,7 @@ class DataProcessor(object):
         :param census_data_df: a dataframe containing the census data.
         """
         self.census_data = census_data_df
+        self.list_pages = None
         self.over_50k_df = None
         self.under_50k_df = None
         self.fix_names()
@@ -152,6 +152,10 @@ class DataProcessor(object):
         all_marital_status = self.census_data.loc[:, 'Marital Status'].unique()
         married = filter(is_record_married, all_marital_status)
         self.census_data = self.census_data.assign(Married=self.census_data['Marital Status'].isin(married))
+
+    def paginate_dataframe(self, page_length):
+        df_length = len(self.census_data)
+        self.list_pages = [self.census_data.loc[i : i + page_length] for i in range(0, df_length, page_length)]
 
     def describe_census_data(self, decimals=3):
         """

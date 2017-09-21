@@ -4,6 +4,8 @@ from flask_restful import Resource
 from rti_app.core import data_processor
 
 class CensusData(Resource):
+    """ Have abandoned this because jsGrid didn't work. Doesn't fill in the values but does recognize the length
+    of data and paginate correctly. Annoying."""
     def get(self):
         """
         Building a REST API: https://www.codementor.io/sagaragarwal94/building-a-basic-restful-api-in-python-58k02xsiq
