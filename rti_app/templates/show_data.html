@@ -7,8 +7,10 @@
             <article class="mt-5">
                 <p class="lead">Table 1: Census Data</p>
             </article>
-            {{ census_table|safe }}
+            <div id="jsGrid"></div>
+            {{ json_data }}
         </div>
     </div>
 </div>
+
 {% endblock %}
