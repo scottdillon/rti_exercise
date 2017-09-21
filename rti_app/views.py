@@ -47,7 +47,7 @@ def show_data(page=1):
         page = last_page
 
     table_html = data_processor.list_pages[page - 1]
-    table_html = change_table_css_class(table_html, index=False)
+    table_html = change_table_css_class(table_html, index=True)
     return render_template('show_data.html',
                            title="RTI Exercise, Scott Dillon",
                            table_html=table_html,
