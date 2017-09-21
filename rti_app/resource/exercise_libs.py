@@ -465,7 +465,7 @@ def round_decimals(dataframe, decimals=3):
     return dataframe.round(decimals)
 
 
-def change_table_css_class(dataframe):
+def change_table_css_class(dataframe, index=True):
     """
     Changes out segments of html based on what is in the dict.
     :param dataframe: a dataframe to turn into html
@@ -473,7 +473,7 @@ def change_table_css_class(dataframe):
     """
     css_change_dict = {'class="dataframe"': 'class="table table-sm table-striped table-hover table-bordered"',
                        'border="1"': ''}
-    table_html = return_dataframe_html(dataframe, print_index=True)
+    table_html = return_dataframe_html(dataframe, print_index=index)
     for old, new in css_change_dict.items():
         table_html = replace_css_class(table_html, old, new)
     return table_html
