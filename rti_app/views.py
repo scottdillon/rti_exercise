@@ -2,6 +2,7 @@ from rti_app import my_app
 from flask import render_template, request
 from .core import get_index_text, hours_worked_plot
 from .core import histogram_hours_worked, over_50k_country_origin
+from .core import data_processor
 
 
 @my_app.route('/')
@@ -29,4 +30,10 @@ def show_data():
 
     :return:
     """
-    return render_template()
+    cen_dataframe = data_processor.census_data
+    PAGE_LENGTH = 20
+
+
+
+    return render_template('show_data.html',
+                           census_table=page_html)
