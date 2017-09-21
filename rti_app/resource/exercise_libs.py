@@ -130,6 +130,8 @@ class DataProcessor(object):
         :param census_data_df: a dataframe containing the census data.
         """
         self.census_data = census_data_df
+        self.over_50k_df = None
+        self.under_50k_df = None
         self.fix_names()
 
     def fix_names(self):
@@ -199,18 +201,35 @@ class DataProcessor(object):
         return round_decimals(groupby_obj.agg(agg_dict), decimals=2)
 
     def get_quantile_traces(self):
+        """
+        Calculate teh quantiles for hours worked for the entire
+        dataset. The create scatter objs from them and return.
+        :return:  a list of scatter objs from the quantiles of
+        hours worked by age.
+        """
         quantiles = [0.1, 0.25, 0.50, 0.75, 0.9]
         quantiles_gb = self.perform_quantile_calculations(quantiles)
         quantile_traces = make_quantile_traces(quantiles, quantiles_gb)
         return quantile_traces
 
     def perform_quantile_calculations(self, quantiles):
+        """
+        Do age groupby then get the quantiles and re-order the
+        hiearchical labels to select by quantile.
+        :param quantiles: a list of decimal values
+        :return: return the groupby objects
+        """
         groupby = self.groupby([age])
         quantiles_gb = groupby[hours_per_week].quantile(quantiles)
         quantiles_gb = quantiles_gb.reorder_levels([1, 0])
         return quantiles_gb
 
     def get_mean_trace(self):
+        """
+        Calculate the mean hours per week and get a scatter trace
+        with it
+        :return:  a plotly scatter obj
+        """
         agg_dict = {hours_per_week: np.mean}
         groupby = self.groupby([age])
         mean_hours_worked = self.aggregate_groupby(groupby, agg_dict)
@@ -220,10 +239,31 @@ class DataProcessor(object):
         return mean_hours_worked_trace
 
     def get_histo_hours_worked_data(self):
+        """
+        calculate the truth table of records who makes more than
+        50k per year. Filter the entire dataframe for over and under
+        50k and return those dataframes.
+        :return:
+        """
         over_50k_truth_table = self.census_data.loc[:, over_50k] == 1
-        over_50k_df = self.census_data[hours_per_week].loc[over_50k_truth_table]
+        self.over_50k_df = self.census_data.loc[over_50k_truth_table]
+        over_50k_df = self.over_50k_df[hours_per_week]
         under_50k_df = self.census_data[hours_per_week].loc[~over_50k_truth_table]
         return over_50k_df, under_50k_df
+
+    def get_country_data(self):
+        """
+        Get a count of where records are form who make
+        more than 50k.
+
+        :return: returns a dataframe of counts by country
+        """
+        over_50k_tt = ~self.over_50k_df['Country'].isin(['United-States', '?'])
+        over_50k_origins = self.over_50k_df[over_50k_tt]
+        over_50k_origins_gb = over_50k_origins.groupby(['Country'])
+        over_50k_origins_count = over_50k_origins_gb['Country'].count()
+        print(over_50k_origins_count)
+        return over_50k_origins_count
 
 
 class GenericScatterTrace(go.Scatter):
@@ -294,15 +334,15 @@ class HoursWorkedLayout(go.Layout):
         self.height = height
 
 
-class HoursWorkedFigure(go.Figure):
+class PlotlyFigure(go.Figure):
     """
     the hours worked scatter figure with go.Data object
     conversion and sets the layout.
     """
-    def __init__(self, data=None):
+    def __init__(self, data=None, layout=None):
         super().__init__()
         self.data = go.Data(data)
-        self.layout = HoursWorkedLayout()
+        self.layout = layout
 
 
 class HistogramHoursWorked(go.Histogram):
@@ -311,7 +351,8 @@ class HistogramHoursWorked(go.Histogram):
     """
     colors = Colors()
 
-    def __init__(self, name=None, x=None, opacity=0.5, line_width=1, norm='probability'):
+    def __init__(self, name=None, x=None, opacity=0.5,
+                 line_width=1, norm='probability'):
         super().__init__()
         self.x = x
         self.opacity = opacity
@@ -327,13 +368,35 @@ class HistogramLayout(go.Layout):
         self.barmode = 'overlay'
         self.title = "Probability Histogram of Hours Worked Per Week for<br>People with Incomes over and under 50k"
         self.xaxis.title = 'Hours Worked per Week'
+        self.yaxis.title = 'Probability of Working X Hours Per Week'
         self.height = height
 
 
-class HistogramHoursWorkedFigure(go.Figure):
-    def __init__(self, data=None):
+class ChoroplethOrigins(go.Choropleth):
+    """
+    subclass the choropleth graph obj to assign
+    attrs automatically.
+    """
+    def __init__(self, z=None):
         super().__init__()
-        self.data = go.Data(data)
+        self.locations = z.index
+        self.locationmode = 'country names'
+        self.z = z
+        self.text = z.index
+        self.marker.line.color = Colors.LIGHT_GRAY
+
+
+class ChoroLayout(go.Layout):
+    """
+    A layout for the choropleth plot.
+    """
+    def __init__(self, height= 500):
+        super().__init__()
+        self.height = height
+        self.geo.showframe = True
+        self.geo.showcoastlines = True
+        self.geo.projection.type = 'Mercator'
+        self.title = "Home Country of Respondents Who Make<br>More Than $50K"
 
 
 def write_csv_file(sqlite_file, query_file, csv_file):
