@@ -46,8 +46,9 @@ def load_csv_data():
 
 def get_index_text():
     """
-
-    :return:
+    Perform some grouping on the data and return table html from
+    dataframes.
+    :return: a tuple of html strings which are tables.
     """
     aggregate_funcs = {'Married': ['count'],
                        'Age': ['mean'],
@@ -81,7 +82,19 @@ def hours_worked_plot():
     return div
 
 
-
+def histogram_hours_worked():
+    """
+    Execute functions to manipulate data and
+    create histogram plots of hours worked.
+    :return:
+    """
+    over_50kdf, under_50k_df = data_processor.get_histo_hours_worked_data()
+    histo_traces = el.get_histo_hours_worked_traces(over_50kdf, under_50k_df)
+    layout = el.HistogramLayout()
+    figure = el.HistogramHoursWorkedFigure(data=histo_traces)
+    figure.layout = layout
+    div = el.get_plotly_div_str(figure_obj=figure)
+    return div
 
 
 data_processor = load_csv_data()
