@@ -77,7 +77,8 @@ def hours_worked_plot():
     quantile_hours_worked = data_processor.get_quantile_traces()
     mean_hours_worked = data_processor.get_mean_trace()
     quantile_hours_worked.append(mean_hours_worked)
-    fig = el.HoursWorkedFigure(data=quantile_hours_worked)
+    layout = el.HoursWorkedLayout()
+    fig = el.PlotlyFigure(data=quantile_hours_worked, layout=layout)
     div = el.get_plotly_div_str(figure_obj=fig)
     return div
 
@@ -91,10 +92,18 @@ def histogram_hours_worked():
     over_50kdf, under_50k_df = data_processor.get_histo_hours_worked_data()
     histo_traces = el.get_histo_hours_worked_traces(over_50kdf, under_50k_df)
     layout = el.HistogramLayout()
-    figure = el.HistogramHoursWorkedFigure(data=histo_traces)
-    figure.layout = layout
+    figure = el.PlotlyFigure(data=histo_traces, layout=layout)
     div = el.get_plotly_div_str(figure_obj=figure)
     return div
 
+
+def over_50k_country_origin():
+    origins_dataframe = data_processor.get_country_data()
+    choropleth_obj = el.ChoroplethOrigins(z=origins_dataframe)
+    choro_layout = el.ChoroLayout()
+    figure = el.PlotlyFigure(data=[choropleth_obj],
+                             layout=choro_layout)
+    div = el.get_plotly_div_str(figure_obj=figure)
+    return div
 
 data_processor = load_csv_data()
