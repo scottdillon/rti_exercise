@@ -17,6 +17,7 @@ import sqlalchemy as sql
 
 age = 'Age'
 hours_per_week = 'Hours Per Week'
+over_50k = 'Over 50K'
 
 
 class Colors(object):
@@ -126,7 +127,7 @@ class DataProcessor(object):
         """
         Let's go ahead and assign the census data as an attribute and
         fix the column names implicitly.
-        :param census_data: a dataframe containing the census data.
+        :param census_data_df: a dataframe containing the census data.
         """
         self.census_data = census_data_df
         self.fix_names()
@@ -200,7 +201,7 @@ class DataProcessor(object):
     def get_quantile_traces(self):
         quantiles = [0.1, 0.25, 0.50, 0.75, 0.9]
         quantiles_gb = self.perform_quantile_calculations(quantiles)
-        quantile_traces = self.make_quantile_traces(quantiles, quantiles_gb)
+        quantile_traces = make_quantile_traces(quantiles, quantiles_gb)
         return quantile_traces
 
     def perform_quantile_calculations(self, quantiles):
@@ -208,15 +209,6 @@ class DataProcessor(object):
         quantiles_gb = groupby[hours_per_week].quantile(quantiles)
         quantiles_gb = quantiles_gb.reorder_levels([1, 0])
         return quantiles_gb
-
-    def make_quantile_traces(self, quantile_list, quantiles_gb):
-        q_traces = []
-        for q in quantile_list:
-            x = quantiles_gb.loc[q].index.values
-            y = quantiles_gb.loc[q].values
-            trace = HoursWorkedQuantileTrace(x=x, y=y, quantile=q)
-            q_traces.append(trace)
-        return q_traces
 
     def get_mean_trace(self):
         agg_dict = {hours_per_week: np.mean}
@@ -226,6 +218,13 @@ class DataProcessor(object):
         mean_y = mean_hours_worked[hours_per_week].values
         mean_hours_worked_trace = AvgHoursWorkedTrace(mean_x, mean_y)
         return mean_hours_worked_trace
+
+    def get_histo_hours_worked_data(self):
+        over_50k_truth_table = self.census_data.loc[:, over_50k] == 1
+        over_50k_df = self.census_data[hours_per_week].loc[over_50k_truth_table]
+        under_50k_df = self.census_data[hours_per_week].loc[~over_50k_truth_table]
+        return over_50k_df, under_50k_df
+
 
 class GenericScatterTrace(go.Scatter):
     """
@@ -240,10 +239,11 @@ class GenericScatterTrace(go.Scatter):
     I _could_ override the __setitem__ method but that _could_ also break the crap out
     of the Scatter obj/plotly so let's don't and say we didn't.
     """
-    def __init__(self, x=None, y=None):
+    def __init__(self, x=None, y=None, marker_size=5):
         super().__init__(x=x, y=y)
         self.x = x
         self.y = y
+        self.marker.size = marker_size
 
 
 class HoursWorkedQuantileTrace(GenericScatterTrace):
@@ -254,17 +254,17 @@ class HoursWorkedQuantileTrace(GenericScatterTrace):
     trace for lots of plots.
     """
     opacity_dict = {'0.1' : 0.3,
-                  '0.25': 0.7,
-                  '0.5': 1.0,
-                  '0.75': 0.7,
-                  '0.9': 0.3}
+                    '0.25': 0.7,
+                    '0.5' : 1.0,
+                    '0.75': 0.7,
+                    '0.9' : 0.3}
+
     def __init__(self, x=None, y=None, quantile=None):
         super().__init__(x=x, y=y)
         self.mode = 'lines+markers'
         self.marker.color = Colors.BLUE
         self.marker.opacity = self.opacity_dict[str(quantile)]
         self.opacity = self.opacity_dict[str(quantile)]
-        self.marker.size = 5
         self.name = '{} Quantile'.format(quantile)
 
 
@@ -272,11 +272,11 @@ class AvgHoursWorkedTrace(GenericScatterTrace):
     """
     Contains attributes specific to the mean hours worked trace on the hours worked plot.
     """
-    def __init__(self, x=None, y=None):
+    def __init__(self, x=None, y=None, marker_size=8):
         super().__init__(x=x, y=y)
         self.mode = 'lines+markers'
         self.marker.color = Colors.RED
-        self.marker.size = 8
+        self.marker.size = marker_size
         self.name = 'Mean hours worked<br>at each age'
 
 
@@ -286,29 +286,54 @@ class HoursWorkedLayout(go.Layout):
     
     Inherits from plotly.graph_objs.Layout object.
     """
-    def __init__(self):
+    def __init__(self, height=600):
         super().__init__()
         self.title = "<b>Hours Per Week Worked by Age</b><br><i>with average hours worked by age</i>"
         self.yaxis.title = hours_per_week
         self.xaxis.title = age
-        self.height = 600
+        self.height = height
 
 
 class HoursWorkedFigure(go.Figure):
     """
-    
+    the hours worked scatter figure with go.Data object
+    conversion and sets the layout.
     """
     def __init__(self, data=None):
         super().__init__()
         self.data = go.Data(data)
         self.layout = HoursWorkedLayout()
 
-class HoursOverUnder50kFigure(go.Figure):
+
+class HistogramHoursWorked(go.Histogram):
+    """
+    Histogram object to use.
+    """
+    colors = Colors()
+
+    def __init__(self, name=None, x=None, opacity=0.5, line_width=1, norm='probability'):
+        super().__init__()
+        self.x = x
+        self.opacity = opacity
+        self.histnorm = norm
+        self.name = name
+        self.marker.line.width = line_width
+        self.marker.color = self.colors.next_color()
+
+
+class HistogramLayout(go.Layout):
+    def __init__(self, height=600):
+        super().__init__()
+        self.barmode = 'overlay'
+        self.title = "Probability Histogram of Hours Worked Per Week for<br>People with Incomes over and under 50k"
+        self.xaxis.title = 'Hours Worked per Week'
+        self.height = height
+
+
+class HistogramHoursWorkedFigure(go.Figure):
     def __init__(self, data=None):
         super().__init__()
-
-
-
+        self.data = go.Data(data)
 
 
 def write_csv_file(sqlite_file, query_file, csv_file):
@@ -446,6 +471,27 @@ def get_plotly_div_str(figure_obj, image_height=800):
                             show_link=False,
                             image_height=image_height)
 
+
+def make_quantile_traces(quantile_list, quantiles_gb):
+    """
+    Calculate and return quantiles
+    :param quantile_list:
+    :param quantiles_gb:
+    :return:
+    """
+    q_traces = []
+    for q in quantile_list:
+        x = quantiles_gb.loc[q].index.values
+        y = quantiles_gb.loc[q].values
+        trace = HoursWorkedQuantileTrace(x=x, y=y, quantile=q)
+        q_traces.append(trace)
+    return q_traces
+
+
+def get_histo_hours_worked_traces(over_50k_df, under_50k_df):
+    over_50k_histo = HistogramHoursWorked(x=over_50k_df, name='Over $50K')
+    under_50k_histo = HistogramHoursWorked(x=under_50k_df, name='Under $50K')
+    return [over_50k_histo, under_50k_histo]
 
 
 if __name__ == '__main__':
