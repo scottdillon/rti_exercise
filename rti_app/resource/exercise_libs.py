@@ -310,6 +310,7 @@ class HoursWorkedQuantileTrace(GenericScatterTrace):
 class AvgHoursWorkedTrace(GenericScatterTrace):
     """
     Contains attributes specific to the mean hours worked trace on the hours worked plot.
+    Set this to use lines and markers.
     """
     def __init__(self, x=None, y=None, marker_size=8):
         super().__init__(x=x, y=y)
@@ -346,7 +347,13 @@ class PlotlyFigure(go.Figure):
 
 class HistogramHoursWorked(go.Histogram):
     """
-    Histogram object to use.
+    Histogram object to use. The bin sizing requires both
+    the autobinx to be false and the dict set for xins.
+
+    We use the colors class attribute to give both
+    attributes different colors without having to set them
+    manually. We're also using norm to set this to a probability
+    histogram intead of a count.
     """
     colors = Colors()
 
@@ -357,13 +364,18 @@ class HistogramHoursWorked(go.Histogram):
         self.opacity = opacity
         self.histnorm = norm
         self.autobinx = False
-        self.xbins = {'start': 0, 'end':100, 'size': 3}
+        self.xbins = {'start': 0, 'end': 100, 'size': 3}
         self.name = name
         self.marker.line.width = line_width
         self.marker.color = self.colors.next_color()
 
 
 class HistogramLayout(go.Layout):
+    """
+    Subclass the layout for the histogram with default titles.
+    barmode is 'overlay' so that the two histograms will be overlaid and
+    not side by side.
+    """
     def __init__(self, height=600):
         super().__init__()
         self.barmode = 'overlay'
@@ -376,7 +388,8 @@ class HistogramLayout(go.Layout):
 class ChoroplethOrigins(go.Choropleth):
     """
     subclass the choropleth graph obj to assign
-    attrs automatically.
+    attrs automatically. Important attrs here are
+    locationmode, locations, z and text
     """
     def __init__(self, z=None):
         super().__init__()
@@ -389,9 +402,9 @@ class ChoroplethOrigins(go.Choropleth):
 
 class ChoroLayout(go.Layout):
     """
-    A layout for the choropleth plot.
+    A layout for the choropleth plot with project defaults.
     """
-    def __init__(self, height= 500):
+    def __init__(self, height=500):
         super().__init__()
         self.height = height
         self.geo.showframe = True
