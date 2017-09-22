@@ -1,5 +1,4 @@
-import numpy as np
-import plotly as plt
+import os.path as path
 from .resource import exercise_libs as el
 
 """
@@ -38,10 +37,6 @@ def load_csv_data():
     data_proc = el.DataProcessor(csv)
     data_proc.create_married_column()
     return data_proc
-
-# We don't need to execute this again. The csv file is
-# already written. Let's make this depend on an argument?
-# write_csv_file()
 
 
 def get_index_text():
@@ -98,6 +93,12 @@ def histogram_hours_worked():
 
 
 def over_50k_country_origin():
+    """
+    Gets dataframes of over and under 50k records, creates the
+    map plot and returns the div string to insert into the
+    template file.
+    :return: div: a string of html
+    """
     origins_dataframe = data_processor.get_country_data()
     choropleth_obj = el.ChoroplethOrigins(z=origins_dataframe)
     choro_layout = el.ChoroLayout()
@@ -107,16 +108,25 @@ def over_50k_country_origin():
     return div
 
 
-def chop_dataframe(data_processor, records_per_page):
+def chop_dataframe(data_proc, records_per_page):
     """
     Checks to see if the data processor object already has
     chopped up the census data dataframe. If not, do so.
-    :param data_processor: a DataProcessor object from exercise_libs.py
+    :param data_proc: a DataProcessor object from exercise_libs.py
     :param records_per_page: an integer noting how many records we want to
         see per page of the pagination.
     :return:
     """
-    if data_processor.list_pages is None:
-        data_processor.paginate_dataframe(records_per_page)
+    if data_proc.list_pages is None:
+        data_proc.paginate_dataframe(records_per_page)
 
+
+if not path.isfile(CSV_FILE):
+    """
+    If our csv file doesn't already exist, go ahead and create it.
+    """
+    write_csv_file()
+
+# Instantiate a DataProcessor object for use in views.py
 data_processor = load_csv_data()
+
