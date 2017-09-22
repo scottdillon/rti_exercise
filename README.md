@@ -7,7 +7,7 @@ If using the anaconda distribution, create a new environment and install the pac
 
     conda create -n new environment --file requirements.txt
 
-If using virtulenv to manage environments, cd to the package directory. Switch environments and install requirements with:
+If using virtualenv to manage environments, cd to the package directory. Switch environments and install requirements with:
 
     pip install -r requirements.txt
 
