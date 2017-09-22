@@ -106,4 +106,17 @@ def over_50k_country_origin():
     div = el.get_plotly_div_str(figure_obj=figure)
     return div
 
+
+def chop_dataframe(data_processor, records_per_page):
+    """
+    Checks to see if the data processor object already has
+    chopped up the census data dataframe. If not, do so.
+    :param data_processor: a DataProcessor object from exercise_libs.py
+    :param records_per_page: an integer noting how many records we want to
+        see per page of the pagination.
+    :return:
+    """
+    if data_processor.list_pages is None:
+        data_processor.paginate_dataframe(records_per_page)
+
 data_processor = load_csv_data()

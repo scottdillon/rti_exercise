@@ -20,9 +20,9 @@ import plotly as plt
 from plotly import graph_objs as go
 import sqlalchemy as sql
 
-age = 'Age'
-hours_per_week = 'Hours Per Week'
-over_50k = 'Over 50K'
+AGE = 'Age'
+HOURS_PER_WEEK = 'Hours Per Week'
+OVER_50K = 'Over 50K'
 
 
 class Colors(object):
@@ -45,6 +45,10 @@ class Colors(object):
     LIGHT_GRAY = 'rbga(240, 240, 240, 1.0)'
 
     def __init__(self):
+        """
+        Set up a list of colors to cycle through or select from
+        and create a cycling iterator to continuously cycle colors.
+        """
         self._seaborn_colors = [self.RED, self.BLUE, self.GREEN,
                                 self.PURPLE, self.YELLOW, self.TURQUOISE]
         self._seaborn_cycle = it.cycle(self._seaborn_colors)
@@ -160,6 +164,18 @@ class DataProcessor(object):
         self.census_data = self.census_data.assign(Married=self.census_data['Marital Status'].isin(married))
 
     def paginate_dataframe(self, page_length):
+        """
+        split the census dataframe up into many smaller dataframes
+        based on how many rows per page is desired.
+
+        For example, if the dataframe has 25 records in it and we want 10 records per
+        page, we would get a list with 3 dataframes in it.
+        [10, 10 and 5]
+
+        :param page_length: an integer for how many records we want to
+         display per page.
+        :return: None
+        """
         df_length = len(self.census_data)
         df = self.census_data.replace('?', '')
         self.list_pages = [df.loc[i : i + page_length] for i in range(0, df_length, page_length)]
@@ -230,8 +246,8 @@ class DataProcessor(object):
         :param quantiles: a list of decimal values
         :return: return the groupby objects
         """
-        groupby = self.groupby([age])
-        quantiles_gb = groupby[hours_per_week].quantile(quantiles)
+        groupby = self.groupby([AGE])
+        quantiles_gb = groupby[HOURS_PER_WEEK].quantile(quantiles)
         quantiles_gb = quantiles_gb.reorder_levels([1, 0])
         return quantiles_gb
 
@@ -241,11 +257,11 @@ class DataProcessor(object):
         with it
         :return:  a plotly scatter obj
         """
-        agg_dict = {hours_per_week: np.mean}
-        groupby = self.groupby([age])
+        agg_dict = {HOURS_PER_WEEK: np.mean}
+        groupby = self.groupby([AGE])
         mean_hours_worked = self.aggregate_groupby(groupby, agg_dict)
         mean_x = mean_hours_worked.index.values
-        mean_y = mean_hours_worked[hours_per_week].values
+        mean_y = mean_hours_worked[HOURS_PER_WEEK].values
         mean_hours_worked_trace = AvgHoursWorkedTrace(mean_x, mean_y)
         return mean_hours_worked_trace
 
@@ -256,10 +272,10 @@ class DataProcessor(object):
         50k and return those dataframes.
         :return:
         """
-        over_50k_truth_table = self.census_data.loc[:, over_50k] == 1
+        over_50k_truth_table = self.census_data.loc[:, OVER_50K] == 1
         self.over_50k_df = self.census_data.loc[over_50k_truth_table]
-        over_50k_df = self.over_50k_df[hours_per_week]
-        under_50k_df = self.census_data[hours_per_week].loc[~over_50k_truth_table]
+        over_50k_df = self.over_50k_df[HOURS_PER_WEEK]
+        under_50k_df = self.census_data[HOURS_PER_WEEK].loc[~over_50k_truth_table]
         return over_50k_df, under_50k_df
 
     def get_country_data(self):
@@ -340,8 +356,8 @@ class HoursWorkedLayout(go.Layout):
     def __init__(self, height=600):
         super().__init__()
         self.title = "<b>Hours Per Week Worked by Age</b><br><i>with average hours worked by age</i>"
-        self.yaxis.title = hours_per_week
-        self.xaxis.title = age
+        self.yaxis.title = HOURS_PER_WEEK
+        self.xaxis.title = AGE
         self.height = height
 
 
@@ -562,9 +578,13 @@ def get_plotly_div_str(figure_obj, image_height=800):
 
 def make_quantile_traces(quantile_list, quantiles_gb):
     """
-    Calculate and return quantiles
-    :param quantile_list:
-    :param quantiles_gb:
+    Calculate and return quantiles.
+    The quantiles are in the top level of the hiearchical index.
+
+    :param quantile_list: A list of decimal values which are the quantiles
+        values  we want ot calculate.
+    :param quantiles_gb: the dataframe groupby object we'll locate the
+        quantiles values in.
     :return:
     """
     q_traces = []
@@ -577,6 +597,12 @@ def make_quantile_traces(quantile_list, quantiles_gb):
 
 
 def get_histo_hours_worked_traces(over_50k_df, under_50k_df):
+    """
+    Gets histogram objects from passed dataframes.
+    :param over_50k_df: a pandas dataframe.
+    :param under_50k_df: a pandas dataframe.
+    :return:
+    """
     over_50k_histo = HistogramHoursWorked(x=over_50k_df, name='Over $50K')
     under_50k_histo = HistogramHoursWorked(x=under_50k_df, name='Under $50K')
     return [over_50k_histo, under_50k_histo]

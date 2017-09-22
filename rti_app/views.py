@@ -2,15 +2,16 @@ from rti_app import my_app
 from flask import render_template, request
 from .core import get_index_text, hours_worked_plot
 from .core import histogram_hours_worked, over_50k_country_origin
-from .core import data_processor
+from .core import data_processor, chop_dataframe
 from .resource.exercise_libs import change_table_css_class
 
 @my_app.route('/')
 @my_app.route('/index')
 def index():
     """
-    stuff
-    :return:
+    Pulls all the data and plots together for creating the index page.
+
+    :return: renders the template and returns the html
     """
     summary_html, html_over_50k = get_index_text()
     hours_worked_div = hours_worked_plot()
@@ -33,8 +34,9 @@ def show_data(page=1):
     :return:
     """
     page_length = 25
-    if data_processor.list_pages is None:
-        data_processor.paginate_dataframe(page_length)
+
+    chop_dataframe(data_processor, page_length)
+
 
     if request.args.get('page'):
         page = int(request.args.get('page'))
