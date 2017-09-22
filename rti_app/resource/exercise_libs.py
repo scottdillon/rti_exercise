@@ -155,7 +155,8 @@ class DataProcessor(object):
 
     def paginate_dataframe(self, page_length):
         df_length = len(self.census_data)
-        self.list_pages = [self.census_data.loc[i : i + page_length] for i in range(0, df_length, page_length)]
+        df = self.census_data.replace('?', '')
+        self.list_pages = [df.loc[i : i + page_length] for i in range(0, df_length, page_length)]
 
     def describe_census_data(self, decimals=3):
         """
