@@ -1,3 +1,25 @@
+## RTI CDS Backend Developer Exercise 01 Submission
+> Scott Dillon
+
+
+#### Environment Setup
+If using the anaconda distribution, create a new environment and install the package requirements using:
+
+    conda create -n new environment --file requirements.txt
+
+If using virtulenv to manage environments, cd to the package directory. Switch environments and install requirements with:
+
+    pip install -r requirements.txt
+
+Once installed and in the new environment, run the flask server with
+
+    python run.py
+
+and point a web browser to [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+The paginated data view is at [http://127.0.0.1:5000/show_data](http://127.0.0.1:5000/show_data)
+
+----
+
 ## RTI CDS Backend Developer Exercise 01
 
 Welcome to Exercise 01. This exercise provides a small SQLite database with some data derived from the 1996 US Census and a few questions related to working with SQL and open source analysis packages.
@@ -35,7 +57,7 @@ There are many things you can do with this dataset. Here are a few structured ta
 
 ### The Data
 
-This repository contains a file called `exercise01.sqlite`. It is a normalized relational [SQLite database](http://www.sqlite.org). 
+This repository contains a file called `exercise01.sqlite`. It is a normalized relational [SQLite database](http://www.sqlite.org).
 
 It contains a table, named `records`, that has 48842 US Census records with the following fields:
 
