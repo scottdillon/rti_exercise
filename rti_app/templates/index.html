@@ -12,6 +12,18 @@
             <div class="container" id="summary">
                 {{ summary_stats|safe }}
             </div>
+            <div class="container">
+                <article>
+                    <p>One can see from our summary statistics of continuous variables
+                        that the average person from this sample is 38, almost 39 years
+                        old. They work 40 hours a week. They have not completed high
+                        school. Twenty four percent of these American persons (US
+                        citizens and permanent residents) make more than $50,000 per year.</p>
+
+                        <p>Seventy five percent of people in this sample work 45 hours or
+                        less with a tight distribution of hours around 40 for most adults.</p>
+                </article>
+            </div>
         </div>
     </div>
     <div class="row">
@@ -32,6 +44,27 @@
             </article>
             <div class="container" id="inc_race_marr">
                 {{ over_50k_race_marr|safe }}
+            </div>
+            <div class="container">
+                <article>
+                    <p>In the second table, I have grouped the continuous data variables
+                        by those who make over $50K, whether they are married or not, and their
+                        race.</p>
+                    <p>The first thing to notice about our data is those who make more than
+                        $50K have more education than those who don't. About two years more
+                        generally. </p>
+                    <p>In the group that makes less than $50K, there are comparitively
+                        fewer married census respondents than unmarried. One suspects that this
+                        is younger, unmarried people making less money and the mean, age of these
+                        groups agrees with the unmarried group who makes less than $50K being about
+                        10 years younger on average.</p>
+                    <p>In the less than $50K group, the hours worked and education levels are similar.</p>
+                    <p>The over $50K group is the opposite with respect to being married and
+                        age. There are more married people who make over $50K while they are
+                        still older but less so than those who are not married. Those unmarried
+                        respondents who make more than $50K also work the longest hours and have
+                        some of the highest education levels in the sample.</p>
+                </article>
             </div>
         </div>
     </div>
