@@ -17,7 +17,7 @@ import itertools as it
 import numpy as np
 import pandas as pd
 import plotly as plt
-from plotly import graph_objs as go
+import plotly.graph_objs as go
 import sqlalchemy as sql
 
 AGE = 'Age'
@@ -165,7 +165,7 @@ class DataProcessor(object):
 
     def paginate_dataframe(self, page_length):
         """
-        split the census dataframe up into many smaller dataframes
+        Split the census dataframe up into many smaller dataframes
         based on how many rows per page is desired.
 
         For example, if the dataframe has 25 records in it and we want 10 records per
