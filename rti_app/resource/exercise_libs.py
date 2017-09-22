@@ -5,6 +5,12 @@ Email: scott.dillon@gmail.com
 This is a collection of classes and functions to perform requirements
 of the exercise as far as the data extraction, saving, csv file reading
 and loading goes. Dataframe processing code is also here.
+
+To use:
+This code should be imported into core.py or views.py, etc. not executed here.
+
+Warnings:
+Importing my_app from the package will cause a circular import error.
 """
 import os
 import itertools as it
@@ -384,7 +390,7 @@ class HistogramLayout(go.Layout):
     def __init__(self, height=600):
         super().__init__()
         self.barmode = 'overlay'
-        self.title = "Probability Histogram of Hours Worked Per Week for<br>People with Incomes over and under 50k"
+        self.title = "<b>Probability Histogram of Hours Worked Per Week for<br>People with Incomes over and under 50k</b>"
         self.xaxis.title = 'Hours Worked per Week'
         self.yaxis.title = 'Probability of Working X Hours Per Week'
         self.height = height
@@ -415,7 +421,7 @@ class ChoroLayout(go.Layout):
         self.geo.showframe = True
         self.geo.showcoastlines = True
         self.geo.projection.type = 'Mercator'
-        self.title = "Home Country of Respondents Who Make<br>More Than $50K"
+        self.title = "<b>Home Country of Respondents Who Make<br>More Than $50K</b>"
 
 
 def write_csv_file(sqlite_file, query_file, csv_file):
